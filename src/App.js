@@ -1,25 +1,30 @@
-import logo from './logo.svg';
-import './App.css';
+const CACHE = {};
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+export default function useStaleRefresh(url, defaultValue = []) {
+  const [data, setData] = useState(defaultValue);
+  const [isLoading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // cacheID is how a cache is identified against a unique request
+    const cacheID = url;
+    // look in cache and set response if present
+    if (CACHE[cacheID] !== undefined) {
+      setData(CACHE[cacheID]);
+      setLoading(false);
+    } else {
+      // else make sure loading set to true
+      setLoading(true);
+      setData(defaultValue);
+    }
+    // fetch new data
+    fetch(url)
+      .then((res) => res.json())
+      .then((newData) => {
+        CACHE[cacheID] = newData;
+        setData(newData);
+        setLoading(false);
+      });
+  }, [url, defaultValue]);
+
+  return [data, isLoading];
 }
-
-export default App;
